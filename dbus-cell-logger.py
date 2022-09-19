@@ -69,8 +69,7 @@ class CellLogger(object):
 
         self.logFile = open("/data/db/cell-logger.dat", "w+")
 
-        # GLib.timeout_add(60000, exit_on_error, self.update)
-        GLib.timeout_add(1000, exit_on_error, self.update)
+        GLib.timeout_add(60000, exit_on_error, self.update)
 
     def update(self):
 
