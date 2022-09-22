@@ -67,26 +67,35 @@ class CellLogger(object):
         self._dbusservice.add_path('/HardwareVersion', 0)
         self._dbusservice.add_path('/Connected', 1)
 
-        self.logFile = open("/data/db/cell-logger.dat", "w+")
+        self.logFile = open("/data/db/cell-logger.dat", "a")
 
         GLib.timeout_add(60000, exit_on_error, self.update)
 
     def update(self):
 
-        self.logFile.write("%d " % int(time.time()))
+        # self.logFile.write("%d " % int(time.time()))
 
         v = self._dbusmonitor.get_value(self.batt_service, "/Dc/0/Voltage")
         # self.logFile.write("%f " % v)
-        self.logFile.write("%s " % str(v))
+        # self.logFile.write("%s " % str(v))
+        if not v: return True # skip this one
 
-        i = self._dbusmonitor.get_value(self.batt_service, "/Dc/0/Current")
-        # self.logFile.write("%f " % i)
-        self.logFile.write("%s " % str(i))
+        c = self._dbusmonitor.get_value(self.batt_service, "/Dc/0/Current")
+        # self.logFile.write("%f " % c)
+        # self.logFile.write("%s " % str(c))
+        if not c: return True # skip this one
 
+        values = []
         for i in range(16):
-            v = self._dbusmonitor.get_value(self.batt_service, "/Voltages/Cell%d" % (i+1))
-            # self.logFile.write("%f " % v)
-            self.logFile.write("%s " % str(v))
+            cv = self._dbusmonitor.get_value(self.batt_service, "/Voltages/Cell%d" % (i+1))
+            # self.logFile.write("%f " % cv)
+            # self.logFile.write("%s " % str(cv))
+            if not cv: return True # skip this one
+            values.append(cv)
+
+        self.logFile.write("%d %f %f " % (int(time.time()), v, c))
+        for i in range(16):
+            self.logFile.write("%f " % values[i])
 
         self.logFile.write("\n")
         self.logFile.flush()
