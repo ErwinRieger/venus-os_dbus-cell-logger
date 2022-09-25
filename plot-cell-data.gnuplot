@@ -1,25 +1,22 @@
 
-set yrange [3.2:3.8]
+set yrange [2.8:3.8] # [V]
+set ylabel "cell voltage [V]"
+
+set y2range [-125:500] # [A]
+set y2label "current [A]"
+
 set grid
 set grid mytics
 set mytics 5
+
+set y2tics 
 
 set xdata time
 set timefmt "%s"
 set format x "%H:%M" 
 
-# stats datafile using 6 prefix "A"
-# stats datafile using 5 prefix "B"
-
-# plot datafile using 4:5 with linespoints title "flowrate stepper", \
-    # datafile using 4:($5/B_mean) with linespoints title "stepper norm", \
-    # datafile using 4:6 with linespoints title "flowrate sensor", \
-    # datafile using 4:($6/A_mean) with linespoints title "sensor norm", \
-    # A_mean title "Mean Sensor"
-
 # plot "cell-logger.dat" using 1:($2/15) with lines title "voltage" linecolor "grey" lw 4, 
-plot "cell-logger.dat" using 1:($3/1500+3.7) with lines title "current" linecolor "grey" lw 2, \
-     "cell-logger.dat" using 1:4 with lines title "cell1" lt 1 linecolor 1, \
+plot "cell-logger.dat" using 1:4 with lines title "cell1" lt 1 linecolor 1, \
      "cell-logger.dat" using 1:5 with lines title "cell2" lt 2 linecolor 2, \
      "cell-logger.dat" using 1:6 with lines title "cell3" lt 3 linecolor 3, \
      "cell-logger.dat" using 1:7 with lines title "cell4" lt 4 linecolor 4, \
@@ -35,13 +32,8 @@ plot "cell-logger.dat" using 1:($3/1500+3.7) with lines title "current" linecolo
      "cell-logger.dat" using 1:17 with lines title "cell14" lt 14 linecolor 14, \
      "cell-logger.dat" using 1:18 with lines title "cell15" lt 15 linecolor 15, \
      "cell-logger.dat" using 1:19 with lines title "cell16" lt 16 linecolor 16, \
-     3.7
-
-
-# A_min title "  Min", A_max title "  Max"
-# , datafile using 4:6 with linespoints smooth bezier, 
-# , 1 title datafile 
-
+     "cell-logger.dat" using 1:3 with lines title "current" linecolor "grey" lw 2 axes x1y2, \
+     0 axes x1y2 lc "black" notitle
 
 pause mouse close
 
