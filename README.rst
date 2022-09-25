@@ -51,9 +51,24 @@ Example log
 
 The file "cell-logger.dat.example" contains some example data.
 
+To plot it using gnuplot, use something like this:
+
+::
+
+   cp cell-logger.dat.example cell-logger.dat
+   gnuplot -e "tzoffset=7200" plot-cell-data.gnuplo
+
+Example plot: xxx todo
+
 Example gnuplot plot
 ++++++++++++++++++++++
 
 
 xxx todo
+
+Planned extensions
+++++++++++++++++++++++
+
+* Create a config-section at the beginning of "dbus-cell-logger.py" to allow modification of some constants (log-interval, log file path...).
+* Add an option to pause logging and to close the logfile (to empty it or to move things around). This will be done using a dbus-value (flag).
 
