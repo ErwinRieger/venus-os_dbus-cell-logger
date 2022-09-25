@@ -53,18 +53,29 @@ The file "cell-logger.dat.example" contains some example data.
 
 To plot it using gnuplot, use something like this:
 
-::
+.. code-block:: sh
 
    cp cell-logger.dat.example cell-logger.dat
    gnuplot -e "tzoffset=7200" plot-cell-data.gnuplo
 
-Example plot: xxx todo
+Example plots: 
+
+.. image:: images/example-plot1
+   :width: 250
+   :target: images/example-plot1
+
+.. image:: images/example-plot1-zoomed
+   :width: 250
+   :target: images/example-plot1-zoomed
+
 
 Example gnuplot plot
 ++++++++++++++++++++++
 
+.. image:: images/example-plot2
+   :width: 250
+   :target: images/example-plot2
 
-xxx todo
 
 Planned extensions
 ++++++++++++++++++++++
