@@ -1,3 +1,4 @@
 
-cp cell-logger.dat.1 cell-logger.dat; ssh root@ess "cat /data/db/cell*" >> cell-logger.dat
+scp root@ess:/data/db/cell-logger.dat .
 gnuplot plot-cell-data.gnuplot
+
