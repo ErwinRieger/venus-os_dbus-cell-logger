@@ -4,11 +4,7 @@
 
 File-format:
 
-    timestamp packvoltage current 16*cellvoltage
-
-Dc/0/Current
-Dc/0/Voltage
-Voltages/Cell1 - Cell16
+    <timestamp> <packvoltage> <current> <cell-voltage1> ... <cell-voltage16>
 
 """
 from gi.repository import GLib
@@ -21,9 +17,6 @@ sys.path.insert(1, os.path.join(os.path.dirname(__file__), './ext/velib_python')
 from vedbus import VeDbusService
 from dbusmonitor import DbusMonitor
 from ve_utils import exit_on_error
-
-onPower =   2750 # watts of rs6000 power when we turn on slave the multiplus, depends on ac current limit of multiplus
-OnTimeout = 1800
 
 servicename='com.victronenergy.cell-logger'
 
@@ -127,10 +120,6 @@ class CellLogger(object):
 # See their manual to explain the % in %20
 
 def main():
-
-    # set timezone used for log entries
-    os.environ['TZ'] = 'Europe/Berlin'
-    time.tzset()
 
     format = "%(asctime)s %(levelname)s:%(name)s:%(message)s"
     logging.basicConfig(level=logging.DEBUG, format=format, datefmt="%d.%m.%y_%X_%Z")
