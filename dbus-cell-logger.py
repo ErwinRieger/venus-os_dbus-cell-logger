@@ -71,12 +71,12 @@ class CellLogger(object):
         v = self._dbusmonitor.get_value(self.batt_service, "/Dc/0/Voltage")
         # self.logFile.write("%f " % v)
         # self.logFile.write("%s " % str(v))
-        if not v: return True # skip this one
+        if v == None: return True # skip this one
 
         c = self._dbusmonitor.get_value(self.batt_service, "/Dc/0/Current")
         # self.logFile.write("%f " % c)
         # self.logFile.write("%s " % str(c))
-        if not c: return True # skip this one
+        if c == None: return True # skip this one
 
         values = []
         for i in range(16):
