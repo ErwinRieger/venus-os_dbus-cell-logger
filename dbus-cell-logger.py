@@ -66,34 +66,30 @@ class CellLogger(object):
 
     def update(self):
 
-        # self.logFile.write("%d " % int(time.time()))
+        self.logFile.write("%d " % int(time.time()))
 
         v = self._dbusmonitor.get_value(self.batt_service, "/Dc/0/Voltage")
-        # self.logFile.write("%f " % v)
-        # self.logFile.write("%s " % str(v))
-        if v == None: return True # skip this one
+        self.writeValue(v)
 
         c = self._dbusmonitor.get_value(self.batt_service, "/Dc/0/Current")
-        # self.logFile.write("%f " % c)
-        # self.logFile.write("%s " % str(c))
-        if c == None: return True # skip this one
+        self.writeValue(c)
 
-        values = []
         for i in range(16):
             cv = self._dbusmonitor.get_value(self.batt_service, "/Voltages/Cell%d" % (i+1))
-            # self.logFile.write("%f " % cv)
-            # self.logFile.write("%s " % str(cv))
-            if not cv: return True # skip this one
-            values.append(cv)
-
-        self.logFile.write("%d %f %f " % (int(time.time()), v, c))
-        for i in range(16):
-            self.logFile.write("%f " % values[i])
+            self.writeValue(cv)
 
         self.logFile.write("\n")
         self.logFile.flush()
 
         return True
+
+    # Handle None values
+    def writeValue(self, v):
+
+        if v != None:
+            self.logFile.write("%f " % v)
+        else:
+            self.logFile.write("NaN ")
 
     # returns a tuple (servicename, instance)
     def _get_service_having_lowest_instance(self, classfilter=None): 
