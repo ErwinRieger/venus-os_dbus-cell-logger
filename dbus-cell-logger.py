@@ -87,7 +87,7 @@ class CellLogger(object):
     def writeValue(self, v):
 
         if v != None:
-            self.logFile.write("%f " % v)
+            self.logFile.write("%.3f " % v)
         else:
             self.logFile.write("NaN ")
 
