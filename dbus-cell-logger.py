@@ -71,9 +71,20 @@ class CellLogger(object):
 
         self.logFile = open("/data/db/cell-logger.dat", "a")
 
+        # Open-state of datafile
+        self._dbusservice.add_path('/A/FileOpened', 1)
+        # Request to close datafile
+        self._dbusservice.add_path('/A/CloseFile', 0, description="Request to close file", writeable=True, onchangecallback=self.closeRequest)
+
+        self._dbusservice['/A/FileOpened'] = 1
+        self._dbusservice['/A/CloseFile'] = 0
+
         GLib.timeout_add(60000, exit_on_error, self.update)
 
     def update(self):
+
+        if self.logFile.closed:
+            return True
 
         self.logFile.write("%d " % int(time.time()))
 
@@ -92,6 +103,20 @@ class CellLogger(object):
 
         self.logFile.write("\n")
         self.logFile.flush()
+
+        return True
+
+    def closeRequest(self, path, closeFile):
+
+        if closeFile and not self.logFile.closed:
+            # close logfile
+            self.logFile.close()
+            self._dbusservice['/A/FileOpened'] = 0
+
+        if not closeFile and self.logFile.closed:
+            # re-open logfile
+            self.logFile = open("/data/db/cell-logger.dat", "a")
+            self._dbusservice['/A/FileOpened'] = 1
 
         return True
 
