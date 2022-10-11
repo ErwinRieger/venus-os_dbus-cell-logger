@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 """
-
 File-format:
 
     <timestamp> <packvoltage> <current> <cell-voltage1> ... <cell-voltage16>
@@ -19,6 +18,16 @@ from dbusmonitor import DbusMonitor
 from ve_utils import exit_on_error
 
 servicename='com.victronenergy.cell-logger'
+
+#
+# Workaround for invalid values from battery service.
+#
+# In my setup (500A daly BMS), from time to time there are spikes in the 
+# data from the battery service (dbus-serialbattery). The invalid data
+# has always the same value: 3.073V. 
+# If the following variable is not none, then cell-voltages with this
+# value are skipped (valid values too, of course).
+SkipValue = 3.073
 
 class CellLogger(object):
 
@@ -76,7 +85,10 @@ class CellLogger(object):
 
         for i in range(16):
             cv = self._dbusmonitor.get_value(self.batt_service, "/Voltages/Cell%d" % (i+1))
-            self.writeValue(cv)
+            if cv == SkipValue:
+                self.writeValue(None)
+            else:
+                self.writeValue(cv)
 
         self.logFile.write("\n")
         self.logFile.flush()
