@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-scp root@ess:/data/db/cell-logger.dat .
+ssh root@ess "cat /data/db/cell-logger.dat" | python3 fixdata.py > cell-logger.dat
 
 # Get local timezone offset in seconds
 tzoffset="$(date +%z|cut -c1,3)"    # +0200 -> +2
