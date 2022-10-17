@@ -81,5 +81,5 @@ Planned extensions
 ++++++++++++++++++++++
 
 * Create a config-section at the beginning of "dbus-cell-logger.py" to allow modification of some constants (log-interval, log file path...).
-* Add an option to pause logging and to close the logfile (to empty it or to move things around). This will be done using a dbus-value (flag).
+* Add an option to pause logging and to close the logfile (to empty it or to move things around). This will be done using a dbus-value (flag). -> done, todo: describe it...
 
