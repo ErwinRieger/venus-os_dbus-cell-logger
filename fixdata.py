@@ -2,6 +2,8 @@
 # Handle gaps in cell-logger data, output NaN values if the gap between
 # two datasets is greater than 120 seconds.
 #
+# lineformat: <timestamp> <voltage> <current> 16*<cellvoltage> <spikeflag> <cellsaverage> ---> 21 values
+#
 import sys, collections, math, pprint, time
 
 def printerr(*args, **kwargs):
@@ -75,11 +77,13 @@ datadict = {}
 steep = collections.defaultdict(list)
 for (ts, u, i, values, cellsavg) in data:
 
-    if lastts and ts-lastts > 120:
-        # print("gap:", lastts, ts, ts-lastts)
-        sys.stdout.write("NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN\n")
-        for cell in range(16):
-            lastvalues[cell] = cellsavg
+    if lastts:
+        
+        if ts <= lastts or ts-lastts > 120:
+            # print("gap:", lastts, ts, ts-lastts)
+            sys.stdout.write(21*"NaN " + "\n")
+            for cell in range(16):
+                lastvalues[cell] = cellsavg
 
     sys.stdout.write(f"{ts} {u} {i} ")
 
@@ -119,7 +123,7 @@ for (ts, u, i, values, cellsavg) in data:
 
     if hasspike:
         # print(f"spike? {lastval} {v} {dy}")
-        sys.stdout.write(" 3.5 xxx")
+        sys.stdout.write(" 3.5")
     else:
         sys.stdout.write(" 0")
 
