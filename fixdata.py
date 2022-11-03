@@ -27,7 +27,8 @@ for line in sys.stdin.readlines():
         continue
 
     values = []
-    cellsavg = []
+    # cellsavg = []
+    foundValue = False
     for cell in range(16):
 
         t = tok[3+cell]
@@ -35,12 +36,12 @@ for line in sys.stdin.readlines():
 
         if not math.isnan(v):
             avgdata[cell].append(v)
-            cellsavg.append(v)
+            # cellsavg.append(v)
+            foundValue = True
 
         values.append(v)
-        cell += 1
 
-    if not cellsavg:
+    if not foundValue:
         # Empty line, no values given
         continue
 
@@ -52,26 +53,31 @@ for line in sys.stdin.readlines():
     else:
         nsame = 0
 
-    cellsavg = sum(cellsavg) / len(cellsavg)
+    # cellsavg = sum(cellsavg) / len(cellsavg)
     # print("cellsavg:", cellsavg)
 
     assert(not math.isnan(ts))
-    data.append((ts, tok[1], tok[2], values, cellsavg))
+    data.append((ts, tok[1], tok[2], values, None))
 
     lastvalues = values
 
-lastvalues = {}
+cellaverages = {}
 for cell in range(16):
 
     cellavg = sum(avgdata[cell]) / len(avgdata[cell])
-    # print("cellavg %d: %f" % (cell, cellavg))
-    lastvalues[cell] = cellavg
+    printerr("cellavg %d: %f" % (cell, cellavg))
+    cellaverages[cell] = cellavg
+
+for cell in range(16):
+    # lastvalues[cell] = data[0][3][cell]
+    lastvalues[cell] = cellaverages[cell]
+
+printerr("")
 
 lastts = None
-lastavg = None
 filtereddata = []
 datadict = {}
-for (ts, u, i, values, cellsavg) in data:
+for (ts, u, i, values, _) in data:
 
     if lastts:
         
@@ -79,32 +85,45 @@ for (ts, u, i, values, cellsavg) in data:
             # print("gap:", lastts, ts, ts-lastts)
             sys.stdout.write(21*"NaN " + "\n")
             for cell in range(16):
-                lastvalues[cell] = cellsavg
+                # lastvalues[cell] = cellsavg
+                # lastvalues[cell] = values[cell]
+                lastvalues[cell] = cellaverages[cell]
 
     sys.stdout.write(f"{ts} {u} {i} ")
 
     hasspike = False
     hasnan = False
+    cellsavg = []
     for cell in range(16):
         lastval = lastvalues[cell]
         v = values[cell]
 
         if math.isnan(v):
-            dy = abs(cellsavg - lastval)
             hasnan = True
-        else:
-            dy = abs(v - lastval)
+            # lastvalues[cell] = cellaverages[cell]
+            sys.stdout.write(f"nan ")
+            continue
+            # dy = abs(cellsavg - lastval)
+        # else:
+            # dy = abs(v - lastval)
+        dy = abs(v - lastval)
 
         # if lastts:
             # sys.stderr.write(f"steigung: {dy / (ts - lastts)}\n")
 
         if lastts and (dy / (ts - lastts)) > 0.001: # 0.25:
-            sys.stderr.write(f"spike {lastval} { math.isnan(v) and cellsavg or v } {dy}\n")
+            sys.stderr.write(f"spike at {ts}, cell: {cell}, lastval: {lastval}, newval: {v}, delta: {dy}\n")
             hasspike = True
             sys.stdout.write(f"nan ")
         else:
             sys.stdout.write(f"{v} ")
-            lastvalues[cell] = v
+            # lastvalues[cell] = v
+            cellsavg.append(v)
+
+        lastvalues[cell] = v
+
+    cellsavg = sum(cellsavg) / len(cellsavg)
+    # printerr("cellsavg: %s" % cellsavg)
 
     if hasspike:
         # print(f"spike? {lastval} {v} {dy}")
@@ -121,7 +140,6 @@ for (ts, u, i, values, cellsavg) in data:
     sys.stdout.write("\n")
 
     lastts = ts
-    lastavg = cellsavg
 
 # bereich der höchsten ladung
 maxcvoltages = max(filtereddata, key=lambda d: max(d[3]))
