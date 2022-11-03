@@ -60,21 +60,17 @@ for line in sys.stdin.readlines():
 
     lastvalues = values
 
-# averages = {}
 lastvalues = {}
 for cell in range(16):
 
     cellavg = sum(avgdata[cell]) / len(avgdata[cell])
     # print("cellavg %d: %f" % (cell, cellavg))
-    # averages[cell] = cellavg
     lastvalues[cell] = cellavg
 
 lastts = None
 lastavg = None
-# a = collections.defaultdict(list)
 filtereddata = []
 datadict = {}
-steep = collections.defaultdict(list)
 for (ts, u, i, values, cellsavg) in data:
 
     if lastts:
@@ -99,12 +95,8 @@ for (ts, u, i, values, cellsavg) in data:
         else:
             dy = abs(v - lastval)
 
-        # dx = 60
-        # a = dy / dx
-        # print("steigung:", dy, dy)
-
-        if lastts:
-            sys.stderr.write(f"steigung: {dy / (ts - lastts)}\n")
+        # if lastts:
+            # sys.stderr.write(f"steigung: {dy / (ts - lastts)}\n")
 
         if lastts and (dy / (ts - lastts)) > 0.001: # 0.25:
             sys.stderr.write(f"spike {lastval} { math.isnan(v) and cellsavg or v } {dy}\n")
@@ -113,13 +105,6 @@ for (ts, u, i, values, cellsavg) in data:
         else:
             sys.stdout.write(f"{v} ")
             lastvalues[cell] = v
-
-        # a[cell].append(dy)
-        if lastts:
-            steep[cell].append(dy / (ts-lastts))
-
-    if lastts:
-        steep[16].append((cellsavg - lastavg) / (ts-lastts)) # append steepness of cellsaverage
 
     if hasspike:
         # print(f"spike? {lastval} {v} {dy}")
@@ -138,60 +123,29 @@ for (ts, u, i, values, cellsavg) in data:
     lastts = ts
     lastavg = cellsavg
 
-# for cell in range(16):
-    # print(cell, min(a[cell]), max(a[cell]))
-
-for (ts, u, i, values, cellsavg) in filtereddata:
-
-    csteep = steep[16]
-    # print(f"cellsaverage max steep: {max(csteep)}")
-    # print(f"cellsaverage min steep: {min(csteep)}")
-
-    for cell in range(16):
-
-        csteep = steep[cell]
-        # print(f"{cell}: max steep: {max(csteep)}")
-        # print(f"{cell}: min steep: {min(csteep)}")
-
 # bereich der höchsten ladung
-maxavg = max(filtereddata, key=lambda d: max(d[3]))
-mints = maxavg[0]
-maxvalues = maxavg[3]
-maxcellsavg = maxavg[4]
-sys.stderr.write(f"max avg at {time.ctime(maxavg[0])}, avg {maxavg[4]}\n")
-sys.stderr.write(f"cells max: {maxavg[3]}\n")
-
-cv = []
-for cell in range(16):
-    cv.append((cell, maxvalues[cell]))
-cv.sort(key=lambda x: x[1])
-
-# for (cell, v) in cv:
-    # if v > cellsavg:
-        # print(f"cell {cell} above while charging: {v}")
-    # else:
-        # print(f"cell {cell} below while charging: {v}")
+maxcvoltages = max(filtereddata, key=lambda d: max(d[3]))
+mints = maxcvoltages[0]
+maxvalues = maxcvoltages[3]
+maxcellsavg = maxcvoltages[4]
+sys.stderr.write(f"\nmax cellvoltage at {time.ctime(maxcvoltages[0])}, avg {maxcvoltages[4]}\n")
+sys.stderr.write(f"cells max: {maxcvoltages[3]}\n")
 
 # bereich der tiefsten entladung
-minavg = min(filtereddata, key=lambda d: min(d[3]))
-mints = minavg[0]
-minvalues = minavg[3]
-mincellsavg = minavg[4]
-sys.stderr.write(f"min avg at {time.ctime(minavg[0])}, avg {minavg[4]}\n")
-sys.stderr.write(f"cells min: {minavg[3]}\n")
-
-cv = []
-for cell in range(16):
-    cv.append((cell, minvalues[cell]))
-cv.sort(key=lambda x: x[1])
+mincvoltages = min(filtereddata, key=lambda d: min(d[3]))
+mints = mincvoltages[0]
+minvalues = mincvoltages[3]
+mincellsavg = mincvoltages[4]
+sys.stderr.write(f"\nmin cellvoltage at {time.ctime(mincvoltages[0])}, avg {mincvoltages[4]}\n")
+sys.stderr.write(f"cells min: {mincvoltages[3]}\n")
 
 # print("\n")
 
-assert(filtereddata.count(maxavg) == 1)
-assert(filtereddata.count(minavg) == 1)
+assert(filtereddata.count(maxcvoltages) == 1)
+assert(filtereddata.count(mincvoltages) == 1)
 
-maxindex = filtereddata.index(maxavg)
-minindex = filtereddata.index(minavg)
+maxindex = filtereddata.index(maxcvoltages)
+minindex = filtereddata.index(mincvoltages)
 
 startindex = minindex
 endindex = maxindex
@@ -199,7 +153,8 @@ if startindex > endindex:
     startindex = maxindex
     endindex = minindex
 
-# for (cell, v) in cv:
+printerr("")
+
 leaders = []
 low = []
 good = []
@@ -251,9 +206,9 @@ for cell in range(16):
         assert(0)
 
 
+# output data around min and max cell-average into its own datafile
 f=open("cellanalyze.dat", "w")
 
-# output data around min and max cell-average into its own datafile
 for index in range(max(0, startindex - 30), min(len(filtereddata), endindex + 30)):
 
     (ts, u, i, values, cellsavg) = filtereddata[index]
@@ -294,101 +249,6 @@ for (cell, area) in weak:
 
 
 
-"""
-
-above = collections.defaultdict(float)
-below = collections.defaultdict(float)
-for (ts, u, i, values, cellsavg) in filtereddata:
-
-    # compute avg of all cells
-    sys.stderr.write(f"avg cell voltage: {cellsavg}\n")
-
-    for cell in range(16):
-        celldiff = (values[cell] - cellsavg) / cellsavg
-        sys.stderr.write(f"cell {cell}, avg diff voltage: {celldiff}\n")
-
-        if celldiff > 0:
-            above[cell] += celldiff
-        elif celldiff < 0:
-            below[cell] += celldiff
-
-
-sys.stderr.write(f"above:\n")
-pprint.pprint(dict(above), sys.stderr)
-sys.stderr.write(f"below:\n")
-pprint.pprint(dict(below), sys.stderr)
-
-
-
-sides= collections.defaultdict(float)
-cside= collections.defaultdict(float)
-nc = 0
-dside= collections.defaultdict(float)
-nd = 0
-for (ts, u, i, values, cellsavg) in filtereddata:
-
-    # min cell voltage
-    mincellvolt = min(values)
-    # max cell voltage
-    maxcellvolt = max(values)
-    voltrange = maxcellvolt - mincellvolt
-
-    sys.stderr.write(f"mincellvolt: {mincellvolt} maxcellvolt: {maxcellvolt} voltrange: {voltrange}\n")
-
-    assert(voltrange >= 0)
-
-    if voltrange > 0.010: # [v] xxx hardcoded
-
-        for cell in range(16):
-
-            celldiff = (values[cell] - cellsavg) * 1000 # [mV]
-            if cell==0:
-                sys.stderr.write(f"cell {cell} diff: {celldiff}\n")
-
-            # if float(i) > 0 and celldiff > 2 and cellsavg > 3.35: # cell ahead while charging
-            if float(i) > 0 and celldiff > 3 : # cell ahead while charging
-                sys.stderr.write(f"cell {cell} ahead while charging, voltage: {celldiff}\n")
-                # sides[cell+1] += celldiff
-                cside[cell+1] += pow(celldiff, 2)
-                nc+=1
-            # elif float(i) < 0 and celldiff < -2 and cellsavg < 3.30: # cell ahead while discharging
-            elif float(i) < 0 and celldiff < -3 : # cell ahead while discharging
-                sys.stderr.write(f"cell {cell} ahead while discharging, voltage: {celldiff}\n")
-                # sides[cell+1] -= celldiff
-                dside[cell+1] += pow(celldiff, 2)
-                nd+=1
-            else:
-                sys.stderr.write(f"ignore cell {cell} i: {i} cellsavg {cellsavg} diff: {celldiff}\n")
-
-            sides[cell+1] += abs(celldiff)
-
-# sys.stderr.write(f"sides:\n")
-# pprint.pprint(dict(sides), sys.stderr)
-
-# for cell in cside.keys():
-    # sides[cell] += cside[cell] / nc
-# for cell in dside.keys():
-    # sides[cell] += dside[cell] / nd
-
-sys.stderr.write(f"Cell Quality:\n")
-sidelist = []
-for cell in range(16):
-    sidelist.append((cell+1, sides[cell]))
-sidelist.sort(key=lambda x: x[1])
-# pprint.pprint(sidelist, sys.stderr)
-sum = 0
-for (cell, diff) in sidelist:
-    sys.stderr.write(f"Cell {cell:2}: diff {diff}\n")
-    sum += diff
-
-sys.stderr.write(f"Sum: {sum}\n")
-
-# sys.stderr.write(f"cside:\n")
-# pprint.pprint(dict(cside), sys.stderr)
-# sys.stderr.write(f"dside:\n")
-# pprint.pprint(dict(dside), sys.stderr)
-
-"""
 
 
 
