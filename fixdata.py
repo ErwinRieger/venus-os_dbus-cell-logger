@@ -13,8 +13,8 @@ def printerr(*args, **kwargs):
 data = []
 avgdata = collections.defaultdict(list)
 
-lastvalues = []
-nsame = 0
+# lastvalues = []
+# nsame = 0
 for line in sys.stdin.readlines():
 
     tok = line.split()
@@ -45,13 +45,13 @@ for line in sys.stdin.readlines():
         # Empty line, no values given
         continue
 
-    if values == lastvalues:
-        nsame += 1
-        if nsame > 15:
-            # skip "stalled" bms cell values
-            continue
-    else:
-        nsame = 0
+    # if values == lastvalues:
+        # nsame += 1
+        # if nsame > 15:
+            # # skip "stalled" bms cell values
+            # continue
+    # else:
+        # nsame = 0
 
     # cellsavg = sum(cellsavg) / len(cellsavg)
     # print("cellsavg:", cellsavg)
@@ -59,7 +59,7 @@ for line in sys.stdin.readlines():
     assert(not math.isnan(ts))
     data.append((ts, tok[1], tok[2], values, None))
 
-    lastvalues = values
+    # lastvalues = values
 
 cellaverages = {}
 for cell in range(16):
@@ -68,6 +68,7 @@ for cell in range(16):
     printerr("cellavg %d: %f" % (cell, cellavg))
     cellaverages[cell] = cellavg
 
+lastvalues = {}
 for cell in range(16):
     # lastvalues[cell] = data[0][3][cell]
     lastvalues[cell] = cellaverages[cell]
@@ -81,8 +82,13 @@ for (ts, u, i, values, _) in data:
 
     if lastts:
         
-        if ts <= lastts or ts-lastts > 120:
-            # print("gap:", lastts, ts, ts-lastts)
+        if ts <= lastts:
+            printerr(f"order error: {lastts} {ts}")
+            assert(0)
+
+        if ts-lastts > 120:
+            printerr(f"gap: {lastts}, {ts}, {ts-lastts}")
+            assert((ts-lastts) < 2*24*3600)
             sys.stdout.write(21*"NaN " + "\n")
             for cell in range(16):
                 # lastvalues[cell] = cellsavg
@@ -121,6 +127,10 @@ for (ts, u, i, values, _) in data:
             cellsavg.append(v)
 
         lastvalues[cell] = v
+
+    if not cellsavg:
+        printerr(f"no data: {ts}, {values}")
+        assert(0)
 
     cellsavg = sum(cellsavg) / len(cellsavg)
     # printerr("cellsavg: %s" % cellsavg)
