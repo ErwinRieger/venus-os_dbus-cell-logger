@@ -13,8 +13,6 @@ def printerr(*args, **kwargs):
 data = []
 avgdata = collections.defaultdict(list)
 
-# lastvalues = []
-# nsame = 0
 for line in sys.stdin.readlines():
 
     tok = line.split()
@@ -26,8 +24,9 @@ for line in sys.stdin.readlines():
         # sys.stdout.write("NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN\n")
         continue
 
+    assert(not math.isnan(ts))
+
     values = []
-    # cellsavg = []
     foundValue = False
     for cell in range(16):
 
@@ -36,7 +35,6 @@ for line in sys.stdin.readlines():
 
         if not math.isnan(v):
             avgdata[cell].append(v)
-            # cellsavg.append(v)
             foundValue = True
 
         values.append(v)
@@ -45,21 +43,7 @@ for line in sys.stdin.readlines():
         # Empty line, no values given
         continue
 
-    # if values == lastvalues:
-        # nsame += 1
-        # if nsame > 15:
-            # # skip "stalled" bms cell values
-            # continue
-    # else:
-        # nsame = 0
-
-    # cellsavg = sum(cellsavg) / len(cellsavg)
-    # print("cellsavg:", cellsavg)
-
-    assert(not math.isnan(ts))
-    data.append((ts, tok[1], tok[2], values, None))
-
-    # lastvalues = values
+    data.append((ts, tok[1], tok[2], values))
 
 cellaverages = {}
 for cell in range(16):
@@ -74,59 +58,77 @@ for cell in range(16):
     lastvalues[cell] = cellaverages[cell]
 
 printerr("")
-
 lastts = None
-filtereddata = []
-datadict = {}
-for (ts, u, i, values, _) in data:
+ranges = []
+timerange = []
+ranges.append(timerange)
+# for (ts, u, i, values, _) in data:
+for i in range(len(data)):
 
-    if lastts:
-        
-        if ts <= lastts:
-            printerr(f"order error: {lastts} {ts}")
-            assert(0)
+    (ts, u, i, values) = data[i]
 
-        if ts-lastts > 120:
-            printerr(f"gap: {lastts}, {ts}, {ts-lastts}")
-            assert((ts-lastts) < 2*24*3600)
-            sys.stdout.write(21*"NaN " + "\n")
-            for cell in range(16):
-                # lastvalues[cell] = cellsavg
-                # lastvalues[cell] = values[cell]
-                lastvalues[cell] = cellaverages[cell]
+    if not lastts:
+        timerange.append((ts, u, i, values))
+        lastts = ts
+        continue
+
+    if ts <= lastts:
+        printerr(f"order error: {lastts} {ts}")
+        assert(0)
+
+    dt = ts-lastts
+    if ts-lastts > 120:
+        printerr(f"gap from {lastts} to {ts}, delta: {dt}")
+        assert(dt < 2*24*3600)
+        timerange = []
+        ranges.append(timerange)
+        lastts = None
+        continue
+
+    timerange.append((ts, u, i, values))
+    lastts = ts
+
+
+printerr(f"# of time ranges: {len(ranges)}")
+# sys.exit(0)
+
+printerr("")
+lastts = None
+# datadict = {}
+
+for timerange in ranges:
+
+  filtereddata = []
+  lastvalues = timerange[0][3]
+
+  for (ts, u, i, values) in timerange:
 
     sys.stdout.write(f"{ts} {u} {i} ")
 
     hasspike = False
     hasnan = False
     cellsavg = []
+
     for cell in range(16):
-        lastval = lastvalues[cell]
+
         v = values[cell]
 
         if math.isnan(v):
             hasnan = True
-            # lastvalues[cell] = cellaverages[cell]
             sys.stdout.write(f"nan ")
             continue
-            # dy = abs(cellsavg - lastval)
-        # else:
-            # dy = abs(v - lastval)
+
+        lastval = lastvalues[cell]
         dy = abs(v - lastval)
 
-        # if lastts:
-            # sys.stderr.write(f"steigung: {dy / (ts - lastts)}\n")
-
-        if lastts and (dy / (ts - lastts)) > 0.001: # 0.25:
+        if lastts and (dy / (ts - lastts)) > 0.01: # 0.25:
             sys.stderr.write(f"spike at {ts}, cell: {cell}, lastval: {lastval}, newval: {v}, delta: {dy}\n")
             hasspike = True
             sys.stdout.write(f"nan ")
         else:
             sys.stdout.write(f"{v} ")
-            # lastvalues[cell] = v
+            lastvalues[cell] = v
             cellsavg.append(v)
-
-        lastvalues[cell] = v
 
     if not cellsavg:
         printerr(f"no data: {ts}, {values}")
@@ -144,12 +146,16 @@ for (ts, u, i, values, _) in data:
     if not hasnan and not hasspike:
         data = (ts, u, i, values, cellsavg)
         filtereddata.append(data)
-        datadict[ts] = data
+        # datadict[ts] = data
 
     sys.stdout.write(f" {cellsavg}")
     sys.stdout.write("\n")
 
     lastts = ts
+
+  sys.stdout.write((20 * "nan ") + "\n") # split graphs in gnuplot
+
+sys.exit(0)
 
 # bereich der höchsten ladung
 maxcvoltages = max(filtereddata, key=lambda d: max(d[3]))
