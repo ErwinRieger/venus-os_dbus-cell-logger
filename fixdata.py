@@ -101,7 +101,13 @@ for timerange in ranges:
   filtereddata = []
   lastvalues = timerange[0][3]
 
-  for (ts, u, i, values) in timerange:
+  for di in range(len(timerange)):
+
+    (ts, u, i, values) = timerange[di]
+
+    nextData = None
+    if di <  len(timerange)-1:
+        nextData = timerange[di+1]
 
     sys.stdout.write(f"{ts} {u} {i} ")
 
@@ -122,9 +128,31 @@ for timerange in ranges:
         dy = abs(v - lastval)
 
         if lastts and (dy / (ts - lastts)) > 0.01: # 0.25:
-            sys.stderr.write(f"spike at {ts}, cell: {cell}, lastval: {lastval}, newval: {v}, delta: {dy}\n")
-            hasspike = True
-            sys.stdout.write(f"nan ")
+
+            if nextData:
+                (nextTs, _, _, nextValues) = nextData
+                v2 = nextValues[cell]
+                assert(not math.isnan(v2))
+                dy2 = abs(v2 - v)
+                if (dy2 / (nextTs - ts)) > 0.01:
+                    sys.stderr.write(f"spike at {ts}, cell: {cell}, lastval: {lastval}, newval: {v}, delta: {dy}\n")
+                    hasspike = True
+                    # sys.stdout.write(f"nan ")
+                    sys.stdout.write(f"{v} ")
+                else:
+                    assert(0)
+
+            else:
+
+                # possible spike at end of range, ignore this value
+                assert(0)
+                sys.stderr.write(f"spike at {ts}, cell: {cell}, lastval: {lastval}, newval: {v}, delta: {dy}\n")
+                hasspike = True
+                sys.stdout.write(f"nan ")
+
+            # sys.stderr.write(f"spike at {ts}, cell: {cell}, lastval: {lastval}, newval: {v}, delta: {dy}\n")
+            # hasspike = True
+            # sys.stdout.write(f"nan ")
         else:
             sys.stdout.write(f"{v} ")
             lastvalues[cell] = v
@@ -141,7 +169,7 @@ for timerange in ranges:
         # print(f"spike? {lastval} {v} {dy}")
         sys.stdout.write(" 3.5")
     else:
-        sys.stdout.write(" 0")
+        sys.stdout.write(" 3.0")
 
     if not hasnan and not hasspike:
         data = (ts, u, i, values, cellsavg)
