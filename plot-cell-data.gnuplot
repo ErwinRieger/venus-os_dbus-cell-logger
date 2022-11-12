@@ -18,7 +18,7 @@ set format x "%d.%H:%M"
 # plot "cell-logger.dat" using ($1 + tzoffset):($2/15) with lines title "voltage" linecolor "grey" lw 4, 
 # datafile using ($1 + tzoffset):20 with lines title "spike" linecolor "grey" lw 2, 
 plot \
-datafile using ($1 + tzoffset):20 with lines title "spike" linecolor "grey" lw 2, \
+datafile using ($1 + tzoffset):20 with lines title "spike" linecolor "red", \
      datafile using ($1 + tzoffset):21 with lines title "cellsavg" lt 16 linecolor "black", \
      datafile using ($1 + tzoffset):4 with lines title "cell1" lt 1 linecolor 1, \
      datafile using ($1 + tzoffset):5 with lines title "cell2" lt 2 linecolor 2, \
