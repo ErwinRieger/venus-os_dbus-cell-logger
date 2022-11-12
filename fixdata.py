@@ -21,7 +21,6 @@ for line in sys.stdin.readlines():
         ts = int(tok[0])
     except ValueError:
         sys.stderr.write("Warning, can't parse timestamp, line is: '%s'\n" % line.strip())
-        # sys.stdout.write("NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN\n")
         continue
 
     assert(not math.isnan(ts))
@@ -181,7 +180,7 @@ for timerange in ranges:
 
     lastts = ts
 
-  sys.stdout.write((20 * "nan ") + "\n") # split graphs in gnuplot
+  sys.stdout.write((21 * "nan ") + "\n") # split graphs in gnuplot
 
 sys.exit(0)
 
