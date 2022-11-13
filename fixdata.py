@@ -76,7 +76,7 @@ for i in range(len(data)):
         assert(0)
 
     dt = ts-lastts
-    if ts-lastts > 120:
+    if ts-lastts > 300: # allow gap up to 5 minutes, reboot for example
         printerr(f"gap from {lastts} to {ts}, delta: {dt}")
         assert(dt < 2*24*3600)
         timerange = []
