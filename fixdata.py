@@ -139,8 +139,10 @@ for timerange in ranges:
                     # sys.stdout.write(f"nan ")
                     sys.stdout.write(f"{v} ")
                 else:
-                    assert(0)
-
+                    # no spike, just a voltage-step
+                    sys.stdout.write(f"{v} ")
+                    lastvalues[cell] = v
+                    cellsavg.append(v)
             else:
 
                 # possible spike at end of range, ignore this value
