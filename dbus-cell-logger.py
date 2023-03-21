@@ -12,6 +12,8 @@ import logging
 import sys
 import os, time
 
+from logging.handlers import TimedRotatingFileHandler 
+
 sys.path.insert(1, os.path.join(os.path.dirname(__file__), './ext/velib_python'))
 from vedbus import VeDbusService
 from dbusmonitor import DbusMonitor
@@ -59,61 +61,35 @@ class CellLogger(object):
         self._dbusservice.add_path('/HardwareVersion', 0)
         self._dbusservice.add_path('/Connected', 1)
 
-        self.logFile = open("/data/db/cell-logger.dat", "a")
-
-        # Open-state of datafile
-        self._dbusservice.add_path('/A/FileOpened', 1)
-        # Request to close datafile
-        self._dbusservice.add_path('/A/CloseFile', 0, description="Request to close file", writeable=True, onchangecallback=self.closeRequest)
-
-        self._dbusservice['/A/FileOpened'] = 1
-        self._dbusservice['/A/CloseFile'] = 0
+        self.dataLogger = logging.getLogger("dbus-cell-logger") 
+        self.dataLogger.addHandler(
+                TimedRotatingFileHandler('/data/db/cell-logger.dat', when="W0", backupCount=4) 
+            )
 
         GLib.timeout_add(60000, exit_on_error, self.update)
 
     def update(self):
 
-        if self.logFile.closed:
-            return True
-
-        self.logFile.write("%d " % int(time.time()))
-
         v = self._dbusmonitor.get_value(self.batt_service, "/Dc/0/Voltage")
-        self.writeValue(v)
-
         c = self._dbusmonitor.get_value(self.batt_service, "/Dc/0/Current")
-        self.writeValue(c)
+
+        s = f"{int(time.time())} {self.getValue(v)}{self.getValue(c)}"
 
         for i in range(16):
             cv = self._dbusmonitor.get_value(self.batt_service, "/Voltages/Cell%d" % (i+1))
-            self.writeValue(cv)
+            s += f"{self.getValue(cv)}"
 
-        self.logFile.write("\n")
-        self.logFile.flush()
-
-        return True
-
-    def closeRequest(self, path, closeFile):
-
-        if closeFile and not self.logFile.closed:
-            # close logfile
-            self.logFile.close()
-            self._dbusservice['/A/FileOpened'] = 0
-
-        if not closeFile and self.logFile.closed:
-            # re-open logfile
-            self.logFile = open("/data/db/cell-logger.dat", "a")
-            self._dbusservice['/A/FileOpened'] = 1
+        self.dataLogger.warning(s)
 
         return True
 
     # Handle None values
-    def writeValue(self, v):
+    def getValue(self, v):
 
         if v != None:
-            self.logFile.write("%.3f " % v)
-        else:
-            self.logFile.write("NaN ")
+            return "%.3f " % v
+
+        return "NaN "
 
     # returns a tuple (servicename, instance)
     def _get_service_having_lowest_instance(self, classfilter=None): 
