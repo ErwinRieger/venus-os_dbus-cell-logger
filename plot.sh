@@ -11,9 +11,14 @@ if [ -n "$1" ]; then
     fi
 fi
 
-# 7200 minutes are 5 days
+ndays="5"
+if [ -n "$2" ]; then
+    ndays="$2"
+fi
+
+# 1440 minutes is 1 day
 if [ "$1" != "$datafile" ]; then
-    ssh root@${host} 'cat $(ls -rt /data/db/cell-logger.dat*)|tail -7200' | python3 fixdata.py cell-logger.dat
+    ssh root@${host} 'cat $(ls -rt /data/db/cell-logger.dat*)'"|tail -$((ndays*1440))" | python3 fixdata.py cell-logger.dat
 fi
 
 # Get local timezone offset in seconds
