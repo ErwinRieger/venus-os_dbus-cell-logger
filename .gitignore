@@ -2,3 +2,7 @@ tags
 datafiles
 .*.swp
 __pycache__
+service/supervise
+service/log/supervise
+
+
